@@ -42,6 +42,8 @@ static const char comm_channel_key[] =
     "TASKOLIB_COMM_CH";
 static const char context_key[] =
     "TASKOLIB_CONTEXT";
+static const char sequence_timeout_key[] =
+    "TASKOLIB_SEQ_TO_MS";
 static const char step_index_key[] =
     "TASKOLIB_STP_INDEX";
 static const char step_timeout_ms_since_epoch_key[] =
@@ -114,6 +116,18 @@ void check_script_timeout(lua_State* lua_state)
             abort_script_with_error(lua_state,
                 cat("Timeout: Script took more than ", seconds, " s to run"));
         }
+    }
+
+    sol::optional<TimeoutTrigger*> opt_sequence_timeout_ptr =
+        registry[sequence_timeout_key];
+    if (    opt_sequence_timeout_ptr.has_value()
+        and opt_sequence_timeout_ptr.value() != nullptr
+        and opt_sequence_timeout_ptr.value()->is_elapsed())
+    {
+        double seconds = std::chrono::duration<double>(
+            opt_sequence_timeout_ptr.value()->get_timeout()).count();
+        abort_script_with_error(lua_state,
+            cat("Timeout: Sequence took more than ", seconds, " s to run"));
     }
 }
 
@@ -200,16 +214,15 @@ void hook_abort_with_error(lua_State* lua_state, lua_Debug*)
 
 void install_custom_commands(sol::state& lua)
 {
-    auto globals = lua.globals();
-    globals["print"] = print_fct;
-    globals["sleep"] = sleep_fct;
-    globals["terminate_sequence"] =
+    lua["print"] = print_fct;
+    lua["sleep"] = sleep_fct;
+    lua["terminate_sequence"] =
         [](sol::this_state lua){ abort_script_with_error(lua, ""); };
 }
 
 void install_timeout_and_termination_request_hook(sol::state& lua, TimePoint now,
     std::chrono::milliseconds timeout, OptionalStepIndex step_idx,
-    const Context& context, CommChannel* comm_channel)
+    const Context& context, CommChannel* comm_channel, TimeoutTrigger* sequence_timeout)
 {
     auto registry = lua.registry();
     registry[step_timeout_s_key] = std::chrono::duration<double>(timeout).count();
@@ -217,6 +230,7 @@ void install_timeout_and_termination_request_hook(sol::state& lua, TimePoint now
     registry[step_index_key] = step_idx ? static_cast<LuaInteger>(*step_idx) : LuaInteger{ -1 };
     registry[comm_channel_key] = comm_channel;
     registry[context_key] = &context;
+    registry[sequence_timeout_key] = sequence_timeout;
 
     // Install a hook that is called after every 100 Lua instructions
     lua_sethook(lua, hook_check_timeout_and_termination_request, LUA_MASKCOUNT, 100);
@@ -225,16 +239,20 @@ void install_timeout_and_termination_request_hook(sol::state& lua, TimePoint now
 void open_safe_library_subset(sol::state& lua)
 {
     lua.open_libraries(sol::lib::base, sol::lib::math, sol::lib::string, sol::lib::table,
-                       sol::lib::utf8);
+                       sol::lib::utf8, sol::lib::os);
 
-    auto globals = lua.globals();
-    globals["collectgarbage"] = sol::nil;
-    globals["debug"] = sol::nil;
-    globals["dofile"] = sol::nil;
-    globals["load"] = sol::nil;
-    globals["loadfile"] = sol::nil;
-    globals["print"] = sol::nil;
-    globals["require"] = sol::nil;
+    lua["collectgarbage"] = sol::nil;
+    lua["debug"] = sol::nil;
+    lua["dofile"] = sol::nil;
+    lua["load"] = sol::nil;
+    lua["loadfile"] = sol::nil;
+    lua["print"] = sol::nil;
+    lua["require"] = sol::nil;
+    lua["os"] = lua.create_table_with(
+        "date", lua["os"]["date"],
+        "time", lua["os"]["time"],
+        "difftime", lua["os"]["difftime"]
+    );
 }
 
 void print_fct(sol::this_state sol, sol::variadic_args va)
