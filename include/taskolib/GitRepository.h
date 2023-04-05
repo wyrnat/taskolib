@@ -81,6 +81,11 @@ public:
     void libgit_commit(const std::string& commit_message);
 
     /**
+     * 
+    */
+   void libgit_push(const std::string& addr);
+
+    /**
      * Deletes seq_repository and all files within
      * \param seq_directory: directory holding sequence
      * 
@@ -103,6 +108,9 @@ private:
 
     /// path to the repository (for taskomat .../sequences/)
     std::filesystem::path repo_path_;
+
+    // URL for git remote
+    std::string url_{""};
 
     /// signature used in commits
     GitSignaturePtr my_signature_{ nullptr };

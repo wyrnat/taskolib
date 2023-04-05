@@ -111,7 +111,7 @@ void GitRepository::libgit_init(std::filesystem::path file_path)
     if (error==GIT_ENOTFOUND) git_signature_new(my_signature_.getptr(), "Taskomat", "taskomat@desy.de", 123456789, 0);
 
     // update files in directory
-    libgit_update();
+    //libgit_update();
 
     // make initial commit
     libgit_commit_initial();
@@ -445,6 +445,23 @@ std::vector <int> GitRepository::libgit_add_files(std::vector<std::filesystem::p
     git_index_write(gindex.get());
 
     return error_list;
+}
+
+void GitRepository::libgit_push(const std::string& addr)
+{
+  // set options
+  git_push_options gpush;
+  int error = git_push_init_options(&gpush, GIT_PUSH_OPTIONS_VERSION);
+  if (error) throw task::Error(gul14::cat("Cannot init push options."));
+
+  // set remote
+  git_remote *gremote;
+  error = git_remote_create(&gremote, repo_.get(), "origin", url_.c_str());
+  if (error) throw task::Error(gul14::cat("Cannot create remote object."));
+
+
+  error = git_remote_push(gremote, nullptr, &gpush);
+  if (error) throw task::Error(gul14::cat("Push to upstream failed"));
 }
 
 } //namespace task
