@@ -35,7 +35,7 @@ using namespace task;
 
 
 
-TEST_CASE("GitRepository Wrapper Test all", "[GitWrapper]")
+TEST_CASE("GitRepository Wrapper Test all", "[GitRepository]")
 {
 
 
@@ -220,4 +220,30 @@ TEST_CASE("GitRepository Wrapper Test all", "[GitWrapper]")
 
         std::filesystem::remove_all("sequences");
     }
+}
+
+
+TEST_CASE("GitRepository Remote Connection", "[GitRepository]")
+{
+
+    SECTION("Clone Repository")
+    {
+
+    }
+
+    SECTION("Push repository to upstream")
+    {
+
+    }
+
+    SECTION("Reset Head")
+    {
+        
+    }
+
+    SECTION("Pull Repository")
+    {
+
+    }
+
 }

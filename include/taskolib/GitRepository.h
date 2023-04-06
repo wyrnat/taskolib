@@ -63,7 +63,11 @@ public:
     void libgit_add();
 
     /**
+     * Stage a list of retrieved files
+     *  \param filepath: vector of filepath. Either absolute or relative to repo_path_
      * 
+     * \return returns the index of a failed staging. If empty vector is returned, all listed files
+     *          were staged.
     */
    std::vector <int> libgit_add_files(std::vector<std::filesystem::path> filepaths);
 
