@@ -85,9 +85,22 @@ public:
     void libgit_commit(const std::string& commit_message);
 
     /**
-     * 
+     * push commits to a sequernce repository
+     * \param addr: address of the git repository host
     */
-   void libgit_push(const std::string& addr);
+    void libgit_push(const std::string& addr);
+
+    /**
+     * pull changes from a sequence repository
+     * \param addr: address of the git repository host
+    */
+    void libgit_pull(const std::string& addr);
+
+    /**
+     * clone a sequence repository
+     * \param addr: address of the git repository host
+    */
+    void libgit_clone(const std::string& addr);
 
     /**
      * Deletes seq_repository and all files within

@@ -465,4 +465,15 @@ void GitRepository::libgit_push(const std::string& addr)
   if (error) throw task::Error(gul14::cat("Push to upstream failed"));
 }
 
+
+void GitRepository::libgit_pull(const std::string& addr)
+{
+
+}
+
+void GitRepository::libgit_clone(const std::string& addr)
+{
+  
+}
+
 } //namespace task
