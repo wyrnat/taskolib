@@ -29,7 +29,7 @@
 #include "taskolib/GitObjectWrapper.h"
 #include <vector>
 
-namespace task {
+namespace git {
 
 /**
  * Struct to express the git status for one file

@@ -29,7 +29,7 @@
 #include <string>
 
 
-namespace task {
+namespace git {
 
 // free C-type pointer (overload)
 void free_libgit_ptr(git_tree* tree);

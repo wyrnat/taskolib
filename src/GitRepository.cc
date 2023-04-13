@@ -31,7 +31,7 @@
 #include <iostream>
 #include <vector>
 
-namespace task {
+namespace git {
 
 
 void GitRepository::construct()
