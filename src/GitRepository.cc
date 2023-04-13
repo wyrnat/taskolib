@@ -34,20 +34,17 @@
 namespace task {
 
 
-GitRepository::GitRepository(std::filesystem::path file_path)
+void GitRepository::construct()
 {
     //init libgit library
     git_libgit2_init();
- 
-    //init member variables
-    repo_path_ = file_path;
 
     // if repository does not exist
     repo_=repository_open(repo_path_);
     if (repo_.get() == nullptr) 
     {
         // initialize everything
-        init(file_path);
+        init(repo_path_);
     }
     else
     {
@@ -104,6 +101,13 @@ void GitRepository::init(std::filesystem::path file_path)
     // create signature
     my_signature_ = signature_default(repo_.get());
     if (my_signature_.get()==nullptr) signature_new("Taskomat", "taskomat@desy.de", 123456789, 0);
+
+    // create remote
+    if (url_ != "")
+    {
+        LibGitPointer<git_remote> remote {remote_create(repo_.get(), "origin", url_.c_str())};
+        if (remote.get() == nullptr) throw task::Error(gul14::cat("Cannot create remote object."));
+    }
 
     // update files in directory
     update();
@@ -414,24 +418,40 @@ std::vector<int> GitRepository::add_files(const std::vector<std::filesystem::pat
 
 void GitRepository::push(const std::string& addr)
 {
-  // set options
-  git_push_options gpush;
-  int error = git_push_init_options(&gpush, GIT_PUSH_OPTIONS_VERSION);
-  if (error) throw task::Error(gul14::cat("Cannot init push options."));
+    // set options
+    git_push_options gpush;
+    int error = git_push_init_options(&gpush, GIT_PUSH_OPTIONS_VERSION);
+    if (error) throw task::Error("Cannot init push options.");
 
-  // set remote
-  git_remote *gremote;
-  error = git_remote_create(&gremote, repo_.get(), "origin", url_.c_str());
-  if (error) throw task::Error(gul14::cat("Cannot create remote object."));
+    // set remote
+    LibGitPointer<git_remote> remote {remote_lookup(repo_.get(), "origin")};
+    if (remote.get() == nullptr) throw task::Error("Cannot find remote object.");
 
-
-  error = git_remote_push(gremote, nullptr, &gpush);
-  if (error) throw task::Error(gul14::cat("Push to upstream failed"));
+    // push to upstream
+    error = git_remote_push(remote.get(), nullptr, &gpush);
+    if (error) throw task::Error("Push to upstream failed");
 }
 
 
 void GitRepository::pull(const std::string& addr)
 {
+    // define fetch options
+    git_fetch_options options = GIT_FETCH_OPTIONS_INIT;
+
+    // set remote
+    LibGitPointer<git_remote> remote {remote_lookup(repo_.get(), "origin")};
+    if (remote.get() == nullptr) throw task::Error(gul14::cat("Cannot find remote object."));
+    
+    // fetch commits from remote connection
+    int error = git_remote_fetch( remote.get(), NULL, &options, NULL );
+    if (error) throw task::Error("Fetch remote failed.");
+
+    // git_apply, if failed git_merge
+    // TODO
+
+    //cleanup repository from remote connection and merge/fetch pointers
+    git_repository_state_cleanup(repo_.get());
+
 
 }
 

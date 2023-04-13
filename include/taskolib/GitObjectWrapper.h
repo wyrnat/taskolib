@@ -149,5 +149,25 @@ LibGitPointer<git_signature>  signature_new     (const std::string& name, const 
  * \return Wrapper of a git_signature*
 */
 LibGitPointer<git_tree>       tree_lookup       (git_repository* repo, git_oid tree_id);
+
+/**
+ * Create a new remote connection in the repository and returns it
+ * \param repo C-type repository
+ * \param remote_name typically 'origin'
+ * \param url adress of remote connection, e.g https://github.com/...
+ * \return Wrapper of a remote connection
+ */
+LibGitPointer<git_remote>     remote_create       (git_repository* repo, const std::string& remote_name, const std::string& url);
+
+
+/**
+ * Collects the remove connection by name and returns it
+ * \param repo C-type repository
+ * \param remote_name typically 'origin'
+ * \return Wrapper of a remote connection
+ */
+LibGitPointer<git_remote>     remote_lookup       (git_repository* repo, const std::string& remote_name);
+
+
 /** \}*/
 }

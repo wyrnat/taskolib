@@ -59,7 +59,9 @@ public:
      * Constructor which specifies the root dir of the git repository.
      * \param file_path: path to "sequences"-folder (or customized directory)
      */
-    explicit GitRepository(std::filesystem::path file_path);
+    explicit GitRepository(std::filesystem::path file_path, const std::string& url): url_{url}, repo_path_{file_path} {construct();};
+
+    explicit GitRepository(std::filesystem::path file_path): url_{""}, repo_path_{file_path} {construct();};
 
     /// returns member variable, which is the root dir of the git repository.
     std::filesystem::path get_path() const;
@@ -133,10 +135,13 @@ private:
     LibGitPointer<git_repository> repo_;
 
     /// path to the repository (for taskomat .../sequences/).
-    std::filesystem::path repo_path_;
+    const std::filesystem::path repo_path_;
 
     /// signature used in commits.
     LibGitPointer<git_signature> my_signature_;
+
+    /// url of remote repository
+    const std::string url_;
 
     /**
      * initialize a new git repository and commit all files in its path.
@@ -182,6 +187,11 @@ private:
      * files in the repository.
     */
     void update();
+
+    /**
+     * Basic construction code, extracted because of constructor overload
+     */
+    void construct();
 
 };
 
