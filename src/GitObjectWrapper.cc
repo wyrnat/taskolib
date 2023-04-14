@@ -28,6 +28,10 @@ void free_libgit_ptr(git_commit* commit)
 {
     git_commit_free(commit);
 }
+void free_libgit_ptr(git_status_list* status)
+{
+    git_status_list_free(status);
+}
 
 
 LibGitPointer<git_repository> repository_open   (const std::string& repo_path)
@@ -90,6 +94,14 @@ LibGitPointer<git_remote>     remote_lookup       (git_repository* repo, const s
     if (git_remote_lookup(&remote, repo, remote_name.c_str()))
         remote = nullptr;
     return LibGitPointer(remote);
+}
+
+LibGitPointer<git_status_list> status_list_new  (git_repository* repo, const git_status_options status_opt)
+{
+    git_status_list *status;
+    if (git_status_list_new(&status, repo, &status_opt))
+        status = nullptr;
+    return LibGitPointer(status);
 }
 
 }

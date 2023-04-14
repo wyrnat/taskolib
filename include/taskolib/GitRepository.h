@@ -57,11 +57,11 @@ public:
 
     /**
      * Constructor which specifies the root dir of the git repository.
-     * \param file_path: path to "sequences"-folder (or customized directory)
+     * \param file_path: path to git directory
      */
-    explicit GitRepository(std::filesystem::path file_path, const std::string& url): url_{url}, repo_path_{file_path} {construct();};
+    explicit GitRepository(const std::filesystem::path& file_path, const std::string& url): url_{url}, repo_path_{file_path} {construct();};
 
-    explicit GitRepository(std::filesystem::path file_path): url_{""}, repo_path_{file_path} {construct();};
+    explicit GitRepository(const std::filesystem::path& file_path): url_{""}, repo_path_{file_path} {construct();};
 
     /// returns member variable, which is the root dir of the git repository.
     std::filesystem::path get_path() const;
@@ -69,7 +69,7 @@ public:
     /// returns a C-type pointer to the current loaded repository.
     git_repository* get_repo();
 
-    /// stage all new and changed files in the repository environment.
+    /// stage all new and changed files and folders in the repository directory.
     void add();
 
     /**
@@ -119,7 +119,7 @@ public:
      *            if the sequence to be deleted is in "sequences/"
      *            then set seq_directory = SEQUENCE_NAME
      */
-    void remove_directory(std::filesystem::path seq_directory);
+    void remove_directory(std::filesystem::path directory);
 
     /**
      * returns current git status.
@@ -165,22 +165,18 @@ private:
      * 
      * \return C-type commit object
     */
-    git_commit* get_commit(int count);
-    git_commit* get_commit(const std::string& ref);
-    git_commit* get_commit();
+    LibGitPointer<git_commit> get_commit(int count);
+    LibGitPointer<git_commit> get_commit(const std::string& ref);
+    LibGitPointer<git_commit> get_commit();
 
     /**
      * Translate all status information for each submodule into String.
      * 
      * \param status: C-type status of all submodules from libgit
      * 
-     * \return A vector of dynamic length which contains an array with the following values:
-     *  :array[0] - path name. If the path changed this value will have the shape
-     *              "OLD_NAME -> NEW_NAME"
-     *  :array[1] - Handling status [unchanged, unstaged, staged, untracked, ignored]
-     *  :array[2] - Change status [new file, deleted, renamed, typechanged, modified, unchanged, ignored, untracked]
+     * \return A vector of dynamic length which contains a status struct 
     */
-    std::vector<FileStatus> collect_status(git_status_list *status) const;
+    std::vector<FileStatus> collect_status(LibGitPointer<git_status_list>& status) const;
 
     /** Update the tracked files in the repository.
      * This member function stages all changes of already tracked
@@ -192,6 +188,24 @@ private:
      * Basic construction code, extracted because of constructor overload
      */
     void construct();
+
+    /**
+     * check if the file from the status entry is not staged and collect the status in filestats.
+     * \note this function is solely called by collect_status. It has no other purpose.
+     * \param filestats a structure which will be filled with the status of the file if the file is unstaged
+     * \param s status of the file. A struct which contains flags about every possible state
+     * \return true if file is unstaged (and filestats initialized), else false
+     */
+    static bool check_filestatus_for_unstaged(FileStatus& filestats, const git_status_entry* s);
+
+    /**
+     * check if the file from the status entry is not unstaged and collect the status in filestats.
+     * \note this function is solely called by collect_status. It has no other purpose.
+     * \param filestats a structure which will be filled with the status of the file if the file is staged
+     * \param s status of the file. A struct which contains flags about every possible state
+     * \return true if file is staged (and filestats initialized), else false
+     */
+    static bool check_filestatus_for_staged(FileStatus& filestats, const git_status_entry* s);
 
 };
 
